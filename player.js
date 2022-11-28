@@ -1,8 +1,9 @@
 export class Player {
 
-    constructor(scene, group, spriteName, maxVelocity, acceleration, x, y) {
+    constructor(scene, group, spriteName, tint, maxVelocity, acceleration, x, y) {
         this.isDown = false;
         this.isMove = false;
+        this.tint = tint;
         this.maxVelocity = maxVelocity;
         this.acceleration = acceleration;
         this.x = x;
@@ -14,11 +15,12 @@ export class Player {
 
     create (scene, group, spriteName)
     {
-        this.sprite = group.create(this.x, this.y, spriteName).setInteractive();
+        this.sprite = group.create(this.x, this.y, spriteName);
         this.sprite.setBounce(1);
         this.sprite.setCollideWorldBounds(true, 0, 0);
         this.sprite.allowGravity = false;
         //this.sprite.setCircle(true);
+        this.sprite.setTint(this.tint);
 
         this.sprite.on('pointerdown', function(pointer) {
             console.dir(" down");

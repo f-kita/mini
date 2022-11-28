@@ -52,7 +52,7 @@ export class SceneGame extends Phaser.Scene {
         const w = {w:596, h:900};
         const c = {w:w.w/2, h:w.h/2};
         //  A simple background for our game
-//        this.add.image(c.w, c.h, 'field');
+        this.add.image(c.w, c.h, 'field');
 
         //  The platforms group contains the ground and the 2 ledges we can jump on
         this.platforms = this.physics.add.staticGroup();
@@ -85,12 +85,12 @@ export class SceneGame extends Phaser.Scene {
             {x: w.w/3*2,    y: w.h/2/2},
         ];
 
-        const teamA=[
+        const teamMy=[
             {s:500, a:500},
             {s:500, a:500},
             {s:500, a:500},
         ];
-        const teamB=[
+        const teamEnemy=[
             {s:500, a:500},
             {s:500, a:500},
             {s:500, a:500},
@@ -98,13 +98,16 @@ export class SceneGame extends Phaser.Scene {
 
         this.players = this.physics.add.group();
         this.players.runChildUpdate = true;
+        this.enemies = this.physics.add.group();
+        this.enemies.runChildUpdate = true;
 
         // The player and its settings
-        teamA.forEach((p, i) =>{
-            new Player(this, this.players, 'dude', p.s, p.a, positions[i].x, positions[i].y);
+        teamEnemy.forEach((p, i) =>{
+            const player = new Player(this, this.enemies, 'dude', 0x8888ff, p.s, p.a, positions[i].x, positions[i].y);
         });
-        teamB.forEach((p, i) =>{
-            new Player(this, this.players, 'dude', p.s, p.a, positions[i].x, w.h-positions[i].y);
+        teamMy.forEach((p, i) =>{
+            const player = new Player(this, this.players, 'dude', 0xffffff, p.s, p.a, positions[i].x, w.h-positions[i].y);
+            player.getSprite().setInteractive();
         });
         
         
@@ -122,13 +125,14 @@ export class SceneGame extends Phaser.Scene {
         //this.physics.add.collider(this.players, this.platforms);
         //this.physics.add.collider(this.ball, this.platforms);
         this.physics.add.collider(this.ball, this.players);
-        this.physics.add.collider(this.players);
+        this.physics.add.collider(this.ball, this.enemies);
+        //this.physics.add.collider(this.players, this.enemies);
 
         //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
         //this.physics.add.overlap(this.players, this.stars, this.collectStar, null, this);
 
-        //this.physics.add.collider(this.players, this.players, this.hit, null, this);
-        //this.physics.add.collider(this.players, this.physics.world, this.hit, null, this);
+        
+        this.physics.add.collider(this.players, this.enemies, this.hit, null, this);
     }
 
     update ()
