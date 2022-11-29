@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-
+<div id="wrapper"></div>
 <script type="module">
 import { SceneTitle } from './title.js'
 import { SceneGame }  from './game.js'
@@ -20,6 +20,11 @@ var config = {
     type: Phaser.AUTO,
     width: 596,
     height: 900,
+    parent: 'wrapper',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
+    },
     physics: {
         default: 'arcade',
         arcade: {
@@ -32,7 +37,6 @@ var config = {
     scene: [SceneGame]
 };
 let game = new Phaser.Game(config);
-
 
 </script>
 

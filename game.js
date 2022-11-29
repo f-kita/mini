@@ -1,4 +1,5 @@
 import { Player }  from './player.js'
+import { Ball }  from './ball.js'
 
 //Game Scene
 export class SceneGame extends Phaser.Scene {
@@ -7,84 +8,59 @@ export class SceneGame extends Phaser.Scene {
         super({key: 'SceneGame'});
     }
 
-    player;
-    stars;
-    bombs;
-    platforms;
-//    cursors;
-    score = 0;
+    scoreMy = 0;
+    scoreEnemy = 0;
     gameOver = false;
     scoreText;
-
+    w = {w:596, h:900};
+    c = {w:this.w.w/2, h:this.w.h/2};
+    pos = [
+        {x: this.c.w,      y: this.c.h/3/2},
+        {x: this.w.w/3,      y: this.c.h/2},
+        {x: this.w.w/3*2,    y: this.c.h/2},
+    ];
 
     preload ()
     {
         console.log('SceneGame');
         this.load.image('field', 'assets/field.png');
-        this.load.image('ground', 'assets/platform.png');
-        this.load.image('ground_v', 'assets/platform_v.png');
-        this.load.image('star', 'assets/star.png');
-        this.load.image('bomb', 'assets/bomb.png');
+        this.load.image('hit', 'assets/hit.png');
+        this.load.image('ball', 'assets/bomb.png');
 
 
         this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
-        this.anims.create([{
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        },{
-            key: 'turn',
-            frames: [ { key: 'dude', frame: 4 } ],
-            frameRate: 20
-        },{
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
-            frameRate: 10,
-            repeat: -1
-        }]);
+       
     }
 
     create ()
     {
         console.log('SceneTitle START');
         //this.cameras.main.zoom = 0.5;
-        const w = {w:596, h:900};
-        const c = {w:w.w/2, h:w.h/2};
-        //  A simple background for our game
-        this.add.image(c.w, c.h, 'field');
 
-        //  The platforms group contains the ground and the 2 ledges we can jump on
-        this.platforms = this.physics.add.staticGroup();
+        // Player anime
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'turn',
+            frames: [ { key: 'dude', frame: 4 } ],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        
 
-        //  Here we create the ground.
-        //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-//        this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        // BG
+        this.add.image(this.c.w, this.c.h, 'field');
 
-        //  Now let's create some ledges
-        //this.platforms.create(50, 50, 'ground');
-        //this.platforms.create(height-16, 50, 'ground');
-        //this.platforms.create(300, 50-32, 'ground');
-
-        //this.platforms.create(50, 750, 'ground');
-        //this.platforms.create(550, 750, 'ground');
-        //this.platforms.create(300, 750+32, 'ground');
-/*
-        this.platforms.create(0, 200, 'ground_v');
-        this.platforms.create(0, 600, 'ground_v');
-        this.platforms.create(600, 200, 'ground_v');
-        this.platforms.create(600, 600, 'ground_v');
-*/
-        //this.platforms.children.iterate(function (child) {
-        //    child.refreshBody();
-        //});
-
-        const positions = [
-            {x: w.w/2,      y: w.h/2/3/2},
-            {x: w.w/3,      y: w.h/2/2},
-            {x: w.w/3*2,    y: w.h/2/2},
-        ];
-
+        // Player
         const teamMy=[
             {s:500, a:500},
             {s:500, a:500},
@@ -101,74 +77,120 @@ export class SceneGame extends Phaser.Scene {
         this.enemies = this.physics.add.group();
         this.enemies.runChildUpdate = true;
 
-        // The player and its settings
+        
         teamEnemy.forEach((p, i) =>{
-            const player = new Player(this, this.enemies, 'dude', 0x8888ff, p.s, p.a, positions[i].x, positions[i].y);
+            console.dir(this.pos[i]);
+            const player = new Player(this.enemies, 'dude', this.pos[i].x, this.pos[i].y, 0x8888ff, p.s, p.a);
         });
         teamMy.forEach((p, i) =>{
-            const player = new Player(this, this.players, 'dude', 0xffffff, p.s, p.a, positions[i].x, w.h-positions[i].y);
+            const player = new Player(this.players, 'dude', this.pos[i].x, this.w.h-this.pos[i].y, 0xffffff, p.s, p.a);
             player.getSprite().setInteractive();
         });
-        
-        
-        this.ball = this.physics.add.sprite(c.w, c.h, 'bomb').setInteractive();
-        this.ball.setBounce(1);
-        this.ball.setCircle(true);
-        this.ball.setCollideWorldBounds(true);
+        // Goal
+        this.hitMy = this.physics.add.sprite(this.w.w/2, 6, 'hit');
+        this.hitEnemy = this.physics.add.sprite(this.w.w/2, this.w.h-6, 'hit');
 
-        this.ball.allowGravity = false;
+
+        this.balls = this.physics.add.group();
+        this.balls.runChildUpdate = true;
+        const ball = new Ball(this.balls, 'ball', this.c.w, this.c.h);
+        ball.getSprite().setInteractive();
+        
+        this.input.on('pointerup', function(pointer) {
+            Player.keyDown = false;
+        }, this);
+        this.input.on('pointerdown', function(pointer) {
+            if(Player.keyDown) return;
+
+            if(Player.selectPlayer !== null){
+                if(Player.selectPlayer.getHas()){
+                    // dribble
+                    Player.selectPlayer.startMove(pointer, 0.6);
+                    console.log('dribble');
+                }else{
+                    // run
+                    Player.selectPlayer.startMove(pointer);
+                    console.log('run');
+                }
+                Player.selectPlayer.getSprite().setTint(Player.selectPlayer.tint);
+                Player.selectPlayer = null;
+            }else{
+                if(Player.ballPlayer !== null){
+                    // kick
+                    console.log('kick');
+                    Player.ballPlayer = null;
+                    ball.startMove(pointer);
+                }
+            }
+        }, this);
 
         //  The score
-        this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+        this.scoreText = this.add.text(2, -2, 'score: 0 - 0', { fontSize: '32px', fill: '#FF0' });
 
-        //  Collide the player and the stars with the platforms
-        //this.physics.add.collider(this.players, this.platforms);
-        //this.physics.add.collider(this.ball, this.platforms);
-        this.physics.add.collider(this.ball, this.players);
-        this.physics.add.collider(this.ball, this.enemies);
-        //this.physics.add.collider(this.players, this.enemies);
+        //this.physics.add.collider(this.balls, this.players);
+        //this.physics.add.collider(this.balls, this.enemies);
 
-        //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-        //this.physics.add.overlap(this.players, this.stars, this.collectStar, null, this);
+        this.physics.add.overlap(this.balls, this.hitMy, this.inGoalMy, null, this);
+        this.physics.add.overlap(this.balls, this.hitEnemy, this.inGoalEnemy, null, this);
 
-        
-        this.physics.add.collider(this.players, this.enemies, this.hit, null, this);
+        this.physics.add.overlap(this.players, this.enemies, this.hitPlayer, null, this);
+
+        this.physics.add.overlap(this.players, this.balls, this.hitBall, null, this);
+        this.physics.add.overlap(this.enemies, this.balls, this.hitBall, null, this);
+
     }
 
-    update ()
+    update(time, delta)
     {
         if (this.gameOver)
         {
             console.log('SceneGame END');
-			this.scene.start('SceneTitle');
+            this.scene.start('SceneTitle');
             return;
         }
 
+        if(Player.ballPlayer !== null){
+            console.dir(Player.ballPlayer);
+            this.balls.children.iterate(function (child) {
+                child.copyPosition(Player.ballPlayer);
+            }, this);
+        }
     }
-    hit (a, b)
+    
+
+    inGoalMy (ball, hit)
+    {
+        this.scoreMy += 1;
+        this.reset();
+    }
+    inGoalEnemy (ball, hit)
+    {
+        this.scoreEnemy += 1;
+        this.reset();
+    }
+
+    reset()
+    {
+        this.scoreText.setText("score: " + this.scoreMy + " - " + this.scoreEnemy);
+        this.balls.children.iterate(function (child) {
+            child.getParent().reset();
+        }, this);
+        this.enemies.children.iterate(function (child) {
+            child.getParent().reset();
+        }, this);
+        this.players.children.iterate(function (child) {
+            child.getParent().reset();
+        }, this);
+    }
+
+    hitBall (player, ball)
+    {
+        Player.ballPlayer = player;
+    }
+
+    hitPlayer (a, b)
     {
         a.setTint(0xff0000);
         b.setTint(0xff0000);
-    }
-
-    inGoal (ball, goal)
-    {
-        //  Add and update the score
-        this.score += 1;
-        this.scoreText.setText('Score: ' + this.score);
-
-        if (this.stars.countActive(true) === 0)
-        {
-            //  A new batch of stars to collect
-            this.stars.children.iterate(function (child) {
-                child.enableBody(true, child.x, 0, true, true);
-            });
-            var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-        }
-    }
-
-    hitBall (player, bomb)
-    {
-        
     }
 }
