@@ -7,7 +7,9 @@ export class SceneGame extends Phaser.Scene {
     constructor() {
         super({key: 'SceneGame'});
     }
-
+    selectPlayer = null;
+    ballPlayer = null;
+    kickPlayer = null;
     scoreMy = 0;
     scoreEnemy = 0;
     gameOver = false;
@@ -62,14 +64,14 @@ export class SceneGame extends Phaser.Scene {
 
         // Player
         const teamMy=[
-            {s:500, a:500},
-            {s:500, a:500},
-            {s:500, a:500},
+            {s:5, a:5, k:10, t:10 },
+            {s:5, a:20, k:5, t:10 },
+            {s:20, a:5, k:5, t:10 },
         ];
         const teamEnemy=[
-            {s:500, a:500},
-            {s:500, a:500},
-            {s:500, a:500},
+            {s:10, a:10, k:10, t:10 },
+            {s:10, a:10, k:10, t:10 },
+            {s:10, a:10, k:10, t:10 },
         ];
 
         this.players = this.physics.add.group();
@@ -80,11 +82,23 @@ export class SceneGame extends Phaser.Scene {
         
         teamEnemy.forEach((p, i) =>{
             console.dir(this.pos[i]);
-            const player = new Player(this.enemies, 'dude', this.pos[i].x, this.pos[i].y, 0x8888ff, p.s, p.a);
+            const player = new Player(this.enemies, 'dude', this.pos[i].x, this.pos[i].y, 0x8888ff, p);
         });
         teamMy.forEach((p, i) =>{
-            const player = new Player(this.players, 'dude', this.pos[i].x, this.w.h-this.pos[i].y, 0xffffff, p.s, p.a);
-            player.getSprite().setInteractive();
+            const player = new Player(this.players, 'dude', this.pos[i].x, this.w.h-this.pos[i].y, 0xffffff, p);
+            const player_sprite = player.getSprite().setInteractive();
+            //player_sprite.on('pointerdown', function(pointer, localX, localY, event) {
+            player_sprite.on('pointerdown', (pointer, localX, localY, event) => {
+                console.dir(" down");
+                event.stopPropagation();
+
+                if(this.selectPlayer){
+                    this.selectPlayer.getSprite().setTint(this.selectPlayer.tint);
+                }
+                this.selectPlayer = player;
+                player.getSprite().setTint(0xff0000);
+                
+            });
         });
         // Goal
         this.hitMy = this.physics.add.sprite(this.w.w/2, 6, 'hit');
@@ -93,33 +107,31 @@ export class SceneGame extends Phaser.Scene {
 
         this.balls = this.physics.add.group();
         this.balls.runChildUpdate = true;
-        const ball = new Ball(this.balls, 'ball', this.c.w, this.c.h);
-        ball.getSprite().setInteractive();
+        this.ball = new Ball(this.balls, 'ball', this.c.w, this.c.h);
+        this.ball.getSprite().setInteractive();
+        this.ball.getSprite().body.onWorldBounds = true;
         
-        this.input.on('pointerup', function(pointer) {
-            Player.keyDown = false;
-        }, this);
         this.input.on('pointerdown', function(pointer) {
-            if(Player.keyDown) return;
 
-            if(Player.selectPlayer !== null){
-                if(Player.selectPlayer.getHas()){
+            if(this.selectPlayer !== null){
+                if(this.selectPlayer.getHas()){
                     // dribble
-                    Player.selectPlayer.startMove(pointer, 0.6);
+                    this.selectPlayer.startMove(this, pointer, 0.6);
                     console.log('dribble');
                 }else{
                     // run
-                    Player.selectPlayer.startMove(pointer);
+                    this.selectPlayer.startMove(this, pointer);
                     console.log('run');
                 }
-                Player.selectPlayer.getSprite().setTint(Player.selectPlayer.tint);
-                Player.selectPlayer = null;
+                this.selectPlayer.getSprite().setTint(this.selectPlayer.tint);
+                this.selectPlayer = null;
             }else{
-                if(Player.ballPlayer !== null){
+                if(this.ballPlayer !== null){
                     // kick
                     console.log('kick');
-                    Player.ballPlayer = null;
-                    ball.startMove(pointer);
+                    this.kickPlayer = this.ballPlayer;
+                    this.ballPlayer = null;
+                    this.ball.startMove(this, pointer, this.kickPlayer.kick);
                 }
             }
         }, this);
@@ -128,8 +140,6 @@ export class SceneGame extends Phaser.Scene {
         this.scoreText = this.add.text(2, -2, 'score: 0 - 0', { fontSize: '32px', fill: '#FF0' });
 
         //this.physics.add.collider(this.balls, this.players);
-        //this.physics.add.collider(this.balls, this.enemies);
-
         this.physics.add.overlap(this.balls, this.hitMy, this.inGoalMy, null, this);
         this.physics.add.overlap(this.balls, this.hitEnemy, this.inGoalEnemy, null, this);
 
@@ -138,10 +148,15 @@ export class SceneGame extends Phaser.Scene {
         this.physics.add.overlap(this.players, this.balls, this.hitBall, null, this);
         this.physics.add.overlap(this.enemies, this.balls, this.hitBall, null, this);
 
+        this.physics.world.on('worldbounds', this.hitWall);
     }
 
     update(time, delta)
     {
+        // clear kick
+        if(this.kickPlayer && this.ball.getSprite().body.touching.none){
+            this.kickPlayer = null;
+        }
         if (this.gameOver)
         {
             console.log('SceneGame END');
@@ -149,10 +164,10 @@ export class SceneGame extends Phaser.Scene {
             return;
         }
 
-        if(Player.ballPlayer !== null){
-            console.dir(Player.ballPlayer);
+        if(this.ballPlayer !== null){
+//            console.dir(this.ballPlayer);
             this.balls.children.iterate(function (child) {
-                child.copyPosition(Player.ballPlayer);
+                child.copyPosition(this.ballPlayer.getSprite());
             }, this);
         }
     }
@@ -185,7 +200,40 @@ export class SceneGame extends Phaser.Scene {
 
     hitBall (player, ball)
     {
-        Player.ballPlayer = player;
+        if(this.kickPlayer){
+            if(this.kickPlayer.getSprite() === player){
+                return;
+            }
+        }
+        if(this.ballPlayer){
+        //    return ;
+        }
+        this.ballPlayer = player.getParent();
+    }
+
+    hitWall(body, up, down, left, right){
+        /*
+        console.log('wall name:'+body.gameObject.getParent().name);
+console.dir("acceleration.x:"+ body.acceleration.x);
+console.dir("acceleration.y:"+ body.acceleration.y);
+console.dir("velocity.x:"+ body.velocity.x);
+console.dir("velocity.y:"+ up, down, left, right);
+*/
+
+        if(up && body.acceleration.y > 0){
+            body.acceleration.y *= -1;
+            //body.velocity.y *= -1;
+        }else if(down && body.acceleration.y < 0){
+            body.acceleration.y *= -1;
+            //body.velocity.y *= -1;
+        }
+        if(left && body.acceleration.x > 0){
+            body.acceleration.x *= -1;
+            //body.velocity.x *= -1;
+        }else if(right && body.acceleration.x < 0){
+            body.acceleration.x *= -1;
+            //body.velocity.x *= -1;
+        }
     }
 
     hitPlayer (a, b)

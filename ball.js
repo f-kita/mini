@@ -8,20 +8,21 @@ export class Ball extends Moves{
         this.tint = 0xffffff;
         this.create(group);
     }
+    name = 'ball';
 
     create (group)
     {
         this.sprite.getParent=()=>this;
-        //this.sprite.setBounce(0);
-        //this.sprite.setCircle(true);
+        this.sprite.setBounce(0);
+        this.sprite.setCircle(true);
         //this.sprite.setCollideWorldBounds(true);
-//        this.sprite.setCollideWorldBounds(true, 0, 0);
+        this.sprite.setCollideWorldBounds(true, 1, 1);
         this.sprite.setTint(this.tint);
-        this.sprite.setActive(true);
+        //this.sprite.setActive(true);
 
         this.sprite.update = () => {
             if(this.isMove){
-                if(Math.abs(this.sprite.body.velocity.x) < 10 && Math.abs(this.sprite.body.velocity.y) < 10){
+                if((Math.abs(this.sprite.body.velocity.x) + Math.abs(this.sprite.body.velocity.y)) < 20){
                     this.stopMove();
                 }
             }
@@ -39,25 +40,19 @@ export class Ball extends Moves{
         this.getSprite().setY(this.y);
     }
 
-    startMove(pointer, velocity = 1000, wait=-1000)
+    startMove(scene, pointer, velocity = 10, wait=-1000)
     {
-        this.isMove = true;
-        this.target.x = pointer.x;
-        this.target.y = pointer.y;
-
-        const x = this.target.x  - this.getSprite().body.x;
-        const y = this.target.y  - this.getSprite().body.y;
-        console.log("x:"+x);
-        console.log("y:"+y);
-        const abs = (Math.abs(x) + Math.abs(y))
-        const ratio_x = x / abs;
-        const ratio_y = y / abs;
-        console.log("ratio_x:"+ratio_x);
-        console.log("ratio_y:"+ratio_y);
-        this.getSprite().setAccelerationX(ratio_x * wait);
-        this.getSprite().setAccelerationY(ratio_y * wait);
-        this.getSprite().setVelocityX(ratio_x * velocity);
-        this.getSprite().setVelocityY(ratio_y * velocity);
+        velocity *= 100;
+        const v = this.getVec(pointer);
+//        console.log("x:"+v.x);
+//        console.log("y:"+v.y);
+        const abs = (Math.abs(v.x) + Math.abs(v.y))
+        const ratio_x = v.x / abs;
+        const ratio_y = v.y / abs;
+//        console.log("ratio_x:"+ratio_x);
+//        console.log("ratio_y:"+ratio_y);
+        this.getSprite().setAcceleration(ratio_x * wait, ratio_y * wait);
+        this.getSprite().setVelocity(ratio_x * velocity, ratio_y * velocity);
         
     }
     stopMove()

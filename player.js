@@ -2,16 +2,18 @@ import { Moves }  from './moves.js'
 
 export class Player extends Moves{
 
-    static selectPlayer = null;
-    static ballPlayer = null;
-    static keyDown = false;
-
-    constructor(group, spriteName, x, y, tint, maxVelocity, acceleration) {
+    constructor(group, spriteName, x, y, tint, p) {
+        const maxVelocity = p.s;
+        const acceleration = p.a;
         super(group, spriteName, x, y, maxVelocity, acceleration);
+        this.kick = p.k;
+        this.technic = p.t;
         this.ball = null; 
         this.tint = tint;
         this.create(group);
     }
+
+    name = 'player';
 
     create (group)
     {
@@ -21,19 +23,6 @@ export class Player extends Moves{
         this.sprite.setCollideWorldBounds(true, 0, 0);
         this.sprite.setTint(this.tint);
         this.sprite.anims.play('turn', true);
-
-        this.sprite.on('pointerdown', function(pointer) {
-            console.dir(" down");
-            Player.keyDown = true;
-            if(Player.selectPlayer){
-                Player.selectPlayer.getSprite().setTint(Player.selectPlayer.tint);
-            }
-                //this.isDown = true;
-            Player.selectPlayer = this;
-            this.getSprite().setTint(0xff0000);
-            
-        }, this);
-
     }
     getHas()
     {
@@ -55,9 +44,9 @@ export class Player extends Moves{
         this.getSprite().setY(this.y);
     }
 
-    startMove(pointer, wait = 1)
+    startMove(scene, pointer, wait = 1)
     {
-        super.startMove(pointer, wait)
+        super.startMove(scene, pointer, wait);
         this.getSprite().anims.play(pointer.x < this.getSprite().body.x ? 'left' : 'right', true);
     }
     stopMove()

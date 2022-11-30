@@ -1,21 +1,22 @@
 export class Moves {
     sprite = null;
+    name = 'moves';
 
     constructor(group, spriteName, x, y, maxVelocity=0, acceleration=0) {
         this.isMove = false;
-        this.maxVelocity = maxVelocity;
-        this.acceleration = acceleration;
+        this.maxVelocity = maxVelocity*50;
+        this.acceleration = acceleration*50;
         this.x = x;
         this.y = y;
-        this.target = {};
+        this.target = {x:0,y:0};
 
         this.sprite = group.create(this.x, this.y, spriteName);
         this.sprite.allowGravity = false;
         this.sprite.update = () => {
             if(this.isMove){
-                let x = this.target.x - this.sprite.body.x;
-                let y = this.target.y - this.sprite.body.y;
-                if(Math.abs(x) < 10 && Math.abs(y) < 10){
+                const x = this.target.x - this.sprite.body.x;
+                const y = this.target.y - this.sprite.body.y;
+                if((Math.abs(x) + Math.abs(y)) < 20){
                     this.stopMove();
                 }
             }
@@ -27,26 +28,43 @@ export class Moves {
         return this.sprite;
     }
 
-    startMove(pointer, rate = 1)
+
+    getVec(pointer)
     {
-        console.log('super start');
+        console.log('start '+this.name);
         this.isMove = true;
         this.target.x = pointer.x;
         this.target.y = pointer.y;
-        const x = this.target.x  - this.getSprite().body.x;
-        const y = this.target.y  - this.getSprite().body.y;
-        const ratio = this.acceleration * rate / (Math.abs(x) + Math.abs(y));
-        this.getSprite().setAccelerationX(x*ratio);
-        this.getSprite().setAccelerationY(y*ratio);
-        this.getSprite().setMaxVelocity(this.maxVelocity);
+        const x = this.target.x - this.getSprite().body.x;
+        const y = this.target.y - this.getSprite().body.y;
+        return {x:x, y:y};
+    }
+
+    startMove(scene, pointer, rate = 1)
+    {
+        const v = this.getVec(pointer);
+        const abs_x = Math.abs(v.x);
+        const abs_y = Math.abs(v.y);
+        const ratio = rate / (abs_x + abs_y);
+        console.log("ratio:"+ratio);
+        console.dir(v);
+        this.getSprite().setAcceleration(v.x * ratio * this.acceleration, v.y * ratio * this.acceleration);
+        //this.getSprite().setMaxVelocity(abs_x * ratio * this.maxVelocity, abs_y * ratio * this.maxVelocity);
+        this.getSprite().body.setMaxSpeed(this.maxVelocity);
+
+        //const angle = scene.physics.moveTo(this.getSprite(), pointer.x, pointer.y, 0 , this.maxVelocity );
+        //this.getSprite().body.acceleration = scene.physics.velocityFromAngle(angle, this.acceleration * rate);
     }
     stopMove()
     {
-        console.log('super stop');
+        console.log('stop '+this.name + " x:"+this.getSprite().body.x + ", y:"+this.getSprite().body.y);
         this.isMove = false;
+        this.getSprite().body.stop();
+        /*
         this.getSprite().setAccelerationX(0);
         this.getSprite().setAccelerationY(0);
         this.getSprite().setVelocityX(0);
         this.getSprite().setVelocityY(0);
+        */
     }
 };
