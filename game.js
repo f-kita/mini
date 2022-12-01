@@ -62,16 +62,16 @@ export class SceneGame extends Phaser.Scene {
         // BG
         this.add.image(this.c.w, this.c.h, 'field');
 
-        // Player
+        // Player param
         const teamMy=[
-            {s:5, a:5, k:10, t:10 },
-            {s:5, a:20, k:5, t:10 },
-            {s:20, a:5, k:5, t:10 },
+            {own:1, role:1, speed:5,  accel:5, kick:20, technic:10 },
+            {own:1, role:2, speed:5, accel:20, kick:15, technic:10 },
+            {own:1, role:3, speed:20, accel:5, kick:10, technic:10 },
         ];
         const teamEnemy=[
-            {s:10, a:10, k:10, t:10 },
-            {s:10, a:10, k:10, t:10 },
-            {s:10, a:10, k:10, t:10 },
+            {own:0, role:1, speed:10, accel:10, kick:10, technic:10 },
+            {own:0, role:2, speed:10, accel:10, kick:10, technic:10 },
+            {own:0, role:3, speed:10, accel:10, kick:10, technic:10 },
         ];
 
         this.players = this.physics.add.group();
@@ -114,9 +114,9 @@ export class SceneGame extends Phaser.Scene {
         this.input.on('pointerdown', function(pointer) {
 
             if(this.selectPlayer !== null){
-                if(this.selectPlayer.getHas()){
+                if(this.selectPlayer == this.ballPlayer){
                     // dribble
-                    this.selectPlayer.startMove(this, pointer, 0.6);
+                    this.selectPlayer.startMove(this, pointer, this.selectPlayer.param.technic);
                     console.log('dribble');
                 }else{
                     // run
@@ -126,12 +126,12 @@ export class SceneGame extends Phaser.Scene {
                 this.selectPlayer.getSprite().setTint(this.selectPlayer.tint);
                 this.selectPlayer = null;
             }else{
-                if(this.ballPlayer !== null){
+                if(this.ballPlayer?.param.own){
                     // kick
                     console.log('kick');
                     this.kickPlayer = this.ballPlayer;
                     this.ballPlayer = null;
-                    this.ball.startMove(this, pointer, this.kickPlayer.kick);
+                    this.ball.startMove(this, pointer, this.kickPlayer.param.kick);
                 }
             }
         }, this);
@@ -165,7 +165,6 @@ export class SceneGame extends Phaser.Scene {
         }
 
         if(this.ballPlayer !== null){
-//            console.dir(this.ballPlayer);
             this.balls.children.iterate(function (child) {
                 child.copyPosition(this.ballPlayer.getSprite());
             }, this);
@@ -206,7 +205,11 @@ export class SceneGame extends Phaser.Scene {
             }
         }
         if(this.ballPlayer){
-        //    return ;
+            const technic = player.getParent().param.technic;
+            const total = this.ballPlayer.param.technic + technic;
+            if(Math.floor(Math.random() * total) >= technic){
+                return;//intercept failed
+            }
         }
         this.ballPlayer = player.getParent();
     }
@@ -238,7 +241,7 @@ console.dir("velocity.y:"+ up, down, left, right);
 
     hitPlayer (a, b)
     {
-        a.setTint(0xff0000);
-        b.setTint(0xff0000);
+        a.setTint(0x0000ff);
+        b.setTint(0x0000ff);
     }
 }

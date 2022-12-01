@@ -2,12 +2,9 @@ import { Moves }  from './moves.js'
 
 export class Player extends Moves{
 
-    constructor(group, spriteName, x, y, tint, p) {
-        const maxVelocity = p.s;
-        const acceleration = p.a;
-        super(group, spriteName, x, y, maxVelocity, acceleration);
-        this.kick = p.k;
-        this.technic = p.t;
+    constructor(group, spriteName, x, y, tint,param) {
+        super(group, spriteName, x, y, param.speed, param.accel);
+        this.param = param;
         this.ball = null; 
         this.tint = tint;
         this.create(group);
@@ -24,14 +21,6 @@ export class Player extends Moves{
         this.sprite.setTint(this.tint);
         this.sprite.anims.play('turn', true);
     }
-    getHas()
-    {
-        return this.has;
-    }
-    setHas(has)
-    {
-        this.has = has;
-    }
 
     reset()
     {
@@ -44,9 +33,9 @@ export class Player extends Moves{
         this.getSprite().setY(this.y);
     }
 
-    startMove(scene, pointer, wait = 1)
+    startMove(scene, pointer, wait = 10)
     {
-        super.startMove(scene, pointer, wait);
+        super.startMove(scene, pointer, wait*0.1);
         this.getSprite().anims.play(pointer.x < this.getSprite().body.x ? 'left' : 'right', true);
     }
     stopMove()
