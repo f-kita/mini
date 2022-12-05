@@ -22,11 +22,17 @@ export class Ball extends Moves{
 
         this.sprite.update = () => {
             if(this.isMove){
-                if((Math.abs(this.sprite.body.velocity.x) + Math.abs(this.sprite.body.velocity.y)) < 20){
+                const x = this.target.x - this.sprite.body.x;
+                const y = this.target.y - this.sprite.body.y;
+                if((Math.abs(x) + Math.abs(y)) < 20){
+                    this.stopMove();
+                }
+                else if((Math.abs(this.sprite.body.velocity.x) + Math.abs(this.sprite.body.velocity.y)) < 20){
                     this.stopMove();
                 }
             }
         };
+
     }
 
     reset()

@@ -12,6 +12,7 @@ export class Moves {
 
         this.sprite = group.create(this.x, this.y, spriteName);
         this.sprite.allowGravity = false;
+        this.group = group;
         this.sprite.update = () => {
             if(this.isMove){
                 const x = this.target.x - this.sprite.body.x;
@@ -31,7 +32,7 @@ export class Moves {
 
     getVec(pointer)
     {
-        console.log('start '+this.name);
+//        console.log('start '+this.name);
         this.isMove = true;
         this.target.x = pointer.x;
         this.target.y = pointer.y;
@@ -42,13 +43,18 @@ export class Moves {
 
     startMove(scene, pointer, rate = 1)
     {
+//        console.dir("startMove");
+//        console.dir("x:"+pointer.x);
+//        console.dir("y:"+pointer.y);
         const v = this.getVec(pointer);
         const abs_x = Math.abs(v.x);
         const abs_y = Math.abs(v.y);
         const ratio = rate / (abs_x + abs_y);
-        console.log("ratio:"+ratio);
-        console.dir(v);
+//        console.log("ratio:"+ratio);
+        //console.dir(v);
+        this.getSprite().body.stop();
         this.getSprite().setAcceleration(v.x * ratio * this.acceleration, v.y * ratio * this.acceleration);
+
         //this.getSprite().setMaxVelocity(abs_x * ratio * this.maxVelocity, abs_y * ratio * this.maxVelocity);
         this.getSprite().body.setMaxSpeed(this.maxVelocity);
 
@@ -57,9 +63,10 @@ export class Moves {
     }
     stopMove()
     {
-        console.log('stop '+this.name + " x:"+this.getSprite().body.x + ", y:"+this.getSprite().body.y);
+//        console.log('stop '+this.name + " x:"+this.getSprite().body.x + ", y:"+this.getSprite().body.y);
         this.isMove = false;
         this.getSprite().body.stop();
+        this.group.scene.nearEnemy=null;
         /*
         this.getSprite().setAccelerationX(0);
         this.getSprite().setAccelerationY(0);

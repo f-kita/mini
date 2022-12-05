@@ -10,6 +10,7 @@ export class SceneGame extends Phaser.Scene {
     selectPlayer = null;
     ballPlayer = null;
     kickPlayer = null;
+    nearEnemy = null;
     scoreMy = 0;
     scoreEnemy = 0;
     gameOver = false;
@@ -83,13 +84,14 @@ export class SceneGame extends Phaser.Scene {
         teamEnemy.forEach((p, i) =>{
             console.dir(this.pos[i]);
             const player = new Player(this.enemies, 'dude', this.pos[i].x, this.pos[i].y, 0x8888ff, p);
+            this.enemy=player;
         });
         teamMy.forEach((p, i) =>{
             const player = new Player(this.players, 'dude', this.pos[i].x, this.w.h-this.pos[i].y, 0xffffff, p);
             const player_sprite = player.getSprite().setInteractive();
             //player_sprite.on('pointerdown', function(pointer, localX, localY, event) {
             player_sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                console.dir(" down");
+                console.log("player down");
                 event.stopPropagation();
 
                 if(this.selectPlayer){
@@ -108,31 +110,28 @@ export class SceneGame extends Phaser.Scene {
         this.balls = this.physics.add.group();
         this.balls.runChildUpdate = true;
         this.ball = new Ball(this.balls, 'ball', this.c.w, this.c.h);
-        this.ball.getSprite().setInteractive();
+        //this.ball.getSprite().setInteractive();
         this.ball.getSprite().body.onWorldBounds = true;
         
-        this.input.on('pointerdown', function(pointer) {
-
-            if(this.selectPlayer !== null){
+        this.input.on('pointerup', function(pointer) {
+            console.log("pointer up");
+            if(this.selectPlayer){
                 if(this.selectPlayer == this.ballPlayer){
-                    // dribble
-                    this.selectPlayer.startMove(this, pointer, this.selectPlayer.param.technic);
                     console.log('dribble');
-                }else{
-                    // run
-                    this.selectPlayer.startMove(this, pointer);
+                    this.selectPlayer.startMove(this, pointer, this.selectPlayer.param.technic);
+                }else if(this.selectPlayer != this.kickPlayer){
                     console.log('run');
+                    this.selectPlayer.startMove(this, pointer);
                 }
-                this.selectPlayer.getSprite().setTint(this.selectPlayer.tint);
-                this.selectPlayer = null;
-            }else{
-                if(this.ballPlayer?.param.own){
-                    // kick
-                    console.log('kick');
-                    this.kickPlayer = this.ballPlayer;
-                    this.ballPlayer = null;
-                    this.ball.startMove(this, pointer, this.kickPlayer.param.kick);
-                }
+            }
+        }, this);
+
+        this.input.on('pointerdown', function(pointer) {
+            console.log("pointer down");
+            
+            if(this.ballPlayer?.param.own){
+                console.log('kick');
+                this.kick(pointer);
             }
         }, this);
 
@@ -143,12 +142,18 @@ export class SceneGame extends Phaser.Scene {
         this.physics.add.overlap(this.balls, this.hitMy, this.inGoalMy, null, this);
         this.physics.add.overlap(this.balls, this.hitEnemy, this.inGoalEnemy, null, this);
 
-        this.physics.add.overlap(this.players, this.enemies, this.hitPlayer, null, this);
+        //this.physics.add.overlap(this.players, this.enemies, this.hitPlayer, null, this);
 
         this.physics.add.overlap(this.players, this.balls, this.hitBall, null, this);
         this.physics.add.overlap(this.enemies, this.balls, this.hitBall, null, this);
 
         this.physics.world.on('worldbounds', this.hitWall);
+    }
+
+    kick(pointer){
+        this.kickPlayer = this.ballPlayer;
+        this.ballPlayer = null;
+        this.ball.startMove(this, pointer, this.kickPlayer.param.kick);
     }
 
     update(time, delta)
@@ -169,6 +174,25 @@ export class SceneGame extends Phaser.Scene {
                 child.copyPosition(this.ballPlayer.getSprite());
             }, this);
         }
+
+        const nearEnemy = this.physics.closest(this.ball.getSprite(), this.enemies.getChildren());
+        if(this.nearEnemy != nearEnemy){
+            this.nearEnemy = nearEnemy;
+
+            if(nearEnemy.getParent() == this.ballPlayer){
+                let pos = {x:this.hitEnemy.body.x, y:this.hitEnemy.body.y};
+                pos.y += 10;
+                this.kick(pos);
+            }else{
+                let pos = {x:this.ball.getSprite().body.x, y:this.ball.getSprite().body.y}
+                pos.x += (pos.x - nearEnemy.body.x) > 0 ? + 10 : -10;
+                pos.y += (pos.y - nearEnemy.body.y) > 0 ? + 10 : -10;
+                nearEnemy.getParent().startMove(this, pos, nearEnemy.getParent().param.technic);
+            }
+        }
+        
+
+
     }
     
 
