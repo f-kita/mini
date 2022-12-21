@@ -4,8 +4,8 @@ export class Moves {
 
     constructor(group, spriteName, x, y, maxVelocity=0, acceleration=0) {
         this.isMove = false;
-        this.maxVelocity = maxVelocity*50;
-        this.acceleration = acceleration*50;
+        this.maxVelocity = maxVelocity;
+        this.acceleration = acceleration;
         this.x = x;
         this.y = y;
         this.target = {x:0,y:0};

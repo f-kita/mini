@@ -16,6 +16,8 @@ export class SceneGame extends Phaser.Scene {
     gameOver = false;
     scoreText;
     w = {w:596, h:900};
+    baseRun = 50;// x dot/frame
+    baseKick = 50;// x dot/frame
     c = {w:this.w.w/2, h:this.w.h/2};
     pos = [
         {x: this.c.w,      y: this.c.h/3/2},
@@ -82,7 +84,7 @@ export class SceneGame extends Phaser.Scene {
 
         
         teamEnemy.forEach((p, i) =>{
-            console.dir(this.pos[i]);
+            //console.dir(this.pos[i]);
             const player = new Player(this.enemies, 'dude', this.pos[i].x, this.pos[i].y, 0x8888ff, p);
             this.enemy=player;
         });
@@ -91,7 +93,7 @@ export class SceneGame extends Phaser.Scene {
             const player_sprite = player.getSprite().setInteractive();
             //player_sprite.on('pointerdown', function(pointer, localX, localY, event) {
             player_sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                console.log("player down");
+                //console.log("player down");
                 event.stopPropagation();
 
                 if(this.selectPlayer){
@@ -103,8 +105,8 @@ export class SceneGame extends Phaser.Scene {
             });
         });
         // Goal
-        this.hitMy = this.physics.add.sprite(this.w.w/2, 6, 'hit');
-        this.hitEnemy = this.physics.add.sprite(this.w.w/2, this.w.h-6, 'hit');
+        this.goalMy = this.physics.add.sprite(this.w.w/2, 6, 'hit');
+        this.goalEnemy = this.physics.add.sprite(this.w.w/2, this.w.h-6, 'hit');
 
 
         this.balls = this.physics.add.group();
@@ -135,12 +137,17 @@ export class SceneGame extends Phaser.Scene {
             }
         }, this);
 
+        // near player select
+        const nearPlayer = this.physics.closest(this.ball.getSprite(), this.players.getChildren());
+        this.selectPlayer = nearPlayer.getParent();
+        nearPlayer.setTint(0xff0000);
+
         //  The score
         this.scoreText = this.add.text(2, -2, 'score: 0 - 0', { fontSize: '32px', fill: '#FF0' });
 
         //this.physics.add.collider(this.balls, this.players);
-        this.physics.add.overlap(this.balls, this.hitMy, this.inGoalMy, null, this);
-        this.physics.add.overlap(this.balls, this.hitEnemy, this.inGoalEnemy, null, this);
+        this.physics.add.overlap(this.balls, this.goalMy, this.inGoalMy, null, this);
+        this.physics.add.overlap(this.balls, this.goalEnemy, this.inGoalEnemy, null, this);
 
         //this.physics.add.overlap(this.players, this.enemies, this.hitPlayer, null, this);
 
@@ -180,7 +187,7 @@ export class SceneGame extends Phaser.Scene {
             this.nearEnemy = nearEnemy;
 
             if(nearEnemy.getParent() == this.ballPlayer){
-                let pos = {x:this.hitEnemy.body.x, y:this.hitEnemy.body.y};
+                let pos = {x:this.goalEnemy.body.x, y:this.goalEnemy.body.y};
                 pos.y += 10;
                 this.kick(pos);
             }else{

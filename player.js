@@ -35,7 +35,8 @@ export class Player extends Moves{
 
     startMove(scene, pointer, wait = 10)
     {
-        super.startMove(scene, pointer, wait*0.1);
+        wait *= scene.baseRun;
+        super.startMove(scene, pointer, wait);
         this.getSprite().anims.play(pointer.x < this.getSprite().body.x ? 'left' : 'right', true);
     }
     stopMove()

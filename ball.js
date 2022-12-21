@@ -46,13 +46,14 @@ export class Ball extends Moves{
         this.getSprite().setY(this.y);
     }
 
-    startMove(scene, pointer, velocity = 10, wait=-1000)
+    startMove(scene, pointer, velocity = 10, wait=-10)
     {
-        velocity *= 100;
+        velocity *= scene.baseKick;
+        wait    *= scene.baseKick;
         const v = this.getVec(pointer);
 //        console.log("x:"+v.x);
 //        console.log("y:"+v.y);
-        const abs = (Math.abs(v.x) + Math.abs(v.y))
+        const abs = (Math.abs(v.x) + Math.abs(v.y));
         const ratio_x = v.x / abs;
         const ratio_y = v.y / abs;
 //        console.log("ratio_x:"+ratio_x);
